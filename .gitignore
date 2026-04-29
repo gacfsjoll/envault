@@ -1,0 +1,11 @@
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.out
+.idea/
+*.swp
+.env
+vendor/
+*.test

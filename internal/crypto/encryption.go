@@ -62,3 +62,19 @@ func Decrypt(key, ciphertext []byte) ([]byte, error) {
 
 	return plaintext, nil
 }
+
+// EncryptString is a convenience wrapper around Encrypt that accepts and
+// returns strings instead of byte slices.
+func EncryptString(key []byte, plaintext string) ([]byte, error) {
+	return Encrypt(key, []byte(plaintext))
+}
+
+// DecryptString is a convenience wrapper around Decrypt that returns the
+// decrypted result as a string.
+func DecryptString(key, ciphertext []byte) (string, error) {
+	plaintext, err := Decrypt(key, ciphertext)
+	if err != nil {
+		return "", err
+	}
+	return string(plaintext), nil
+}

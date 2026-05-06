@@ -26,6 +26,24 @@ func setupListDir(t *testing.T) (string, func()) {
 	}
 }
 
+// captureStdout redirects os.Stdout to a pipe, calls fn, then restores
+// os.Stdout and returns everything written to it as a string.
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+	old := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("failed to create pipe: %v", err)
+	}
+	os.Stdout = w
+	fn()
+	w.Close()
+	os.Stdout = old
+	var buf strings.Builder
+	buf.ReadFrom(r)
+	return buf.String()
+}
+
 func TestRunListNoSecrets(t *testing.T) {
 	dir, cleanup := setupListDir(t)
 	defer cleanup()
@@ -56,21 +74,11 @@ func TestRunListShowsKeys(t *testing.T) {
 		t.Fatalf("push failed: %v", err)
 	}
 
-	// Capture stdout.
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	if err := RunList(pass, false); err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-
-	w.Close()
-	os.Stdout = old
-
-	var buf strings.Builder
-	buf.ReadFrom(r)
-	out := buf.String()
+	out := captureStdout(t, func() {
+		if err := RunList(pass, false); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
 
 	if !strings.Contains(out, "KEY1") || !strings.Contains(out, "KEY2") {
 		t.Errorf("expected KEY1 and KEY2 in output, got: %q", out)
@@ -92,20 +100,11 @@ func TestRunListShowsValues(t *testing.T) {
 		t.Fatalf("push failed: %v", err)
 	}
 
-	old := os.Stdout
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	if err := RunList(pass, true); err != nil {
-		t.Errorf("unexpected error: %v", err)
-	}
-
-	w.Close()
-	os.Stdout = old
-
-	var buf strings.Builder
-	buf.ReadFrom(r)
-	out := buf.String()
+	out := captureStdout(t, func() {
+		if err := RunList(pass, true); err != nil {
+			t.Errorf("unexpected error: %v", err)
+		}
+	})
 
 	if !strings.Contains(out, "SECRET=hunter2") {
 		t.Errorf("expected SECRET=hunter2 in output, got: %q", out)

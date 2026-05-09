@@ -11,6 +11,7 @@ import (
 
 // RunList prints all secret keys stored in the vault for the current project.
 // If showValues is true, decrypted values are also printed.
+// Secrets are printed in alphabetical order by key.
 func RunList(passphrase string, showValues bool) error {
 	cfg, err := project.Load(".envault.json")
 	if err != nil {
@@ -28,11 +29,7 @@ func RunList(passphrase string, showValues bool) error {
 		return nil
 	}
 
-	keys := make([]string, 0, len(secrets))
-	for k := range secrets {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
+	keys := sortedKeys(secrets)
 
 	for _, k := range keys {
 		if showValues {
@@ -42,4 +39,14 @@ func RunList(passphrase string, showValues bool) error {
 		}
 	}
 	return nil
+}
+
+// sortedKeys returns the keys of the given map sorted alphabetically.
+func sortedKeys(m map[string]string) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
